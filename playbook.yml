@@ -1,0 +1,11 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+    - digital_ocean: >
+          state=present
+          command=ssh
+          name=gitlab_key
+          ssh_pub_key="{{ lookup('env', 'GITLAB_SSH_PUBLIC_KEY') }}"
