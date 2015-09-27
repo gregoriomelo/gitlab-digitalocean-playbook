@@ -2,6 +2,11 @@
 - hosts: localhost
   connection: local
   gather_facts: false
+  vars:
+    droplet_name: gitlab
+    droplet_region: 8 # NYC3
+    droplet_memory_size: 63 # 1GB
+    droplet_image_id: 13670476 # GitLab 8.0.1
 
   tasks:
     - digital_ocean:
@@ -16,14 +21,11 @@
       digital_ocean:
         state: present
         command: droplet
-        name: gitlab
+        name: "{{ droplet_name }}"
         private_networking: yes
-        # 1GB
-        size_id: 63
-        # GitLab
-        image_id: 13670476
-        # nyc3
-        region_id: 8
+        size_id: "{{ droplet_memory_size }}"
+        image_id: "{{ droplet_image_id }}"
+        region_id: "{{ droplet_region }}"
         # uses the ssh_key created in the previous step
         ssh_key_ids: "{{ gitlab_key.ssh_key.id }}"
         # Required for idempotence/only one droplet creation.
