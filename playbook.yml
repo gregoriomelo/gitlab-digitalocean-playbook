@@ -4,8 +4,45 @@
   gather_facts: false
 
   tasks:
-    - digital_ocean: >
-          state=present
-          command=ssh
-          name=gitlab_key
-          ssh_pub_key="{{ lookup('env', 'GITLAB_SSH_PUBLIC_KEY') }}"
+    - digital_ocean:
+        state: present
+        command: ssh
+        name: gitlab_key
+        ssh_pub_key: "{{ lookup('env', 'GITLAB_SSH_PUBLIC_KEY') }}"
+      register: gitlab_key
+    - debug: msg="{{ gitlab_key.ssh_key.id}}"
+
+    - name: Create new Droplet.
+      digital_ocean:
+        state: present
+        command: droplet
+        name: gitlab
+        private_networking: yes
+        # 1GB
+        size_id: 63
+        # GitLab
+        image_id: 13670476
+        # nyc3
+        region_id: 8
+        # uses the ssh_key created in the previous step
+        ssh_key_ids: "{{ gitlab_key.ssh_key.id }}"
+        # Required for idempotence/only one droplet creation.
+        unique_name: yes
+      register: do
+
+    - name: Add new host to our inventory.
+      add_host:
+        name: "{{ do.droplet.ip_address }}"
+        groups: do
+      when: do.droplet is defined
+
+- hosts: do
+  remote_user: root
+  gather_facts: false
+
+  tasks:
+    - name: Wait for port 22 to become available.
+      local_action: "wait_for port=22 host={{ inventory_hostname }}"
+
+    - name: Install vim.
+      apt: name=vim state=present
