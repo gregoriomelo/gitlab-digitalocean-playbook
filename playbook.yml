@@ -2,49 +2,22 @@
 - hosts: localhost
   connection: local
   gather_facts: false
-  vars:
-    droplet_name: gitlab
-    droplet_region: 8 # NYC3
-    droplet_memory_size: 63 # 1GB
-    droplet_image_id: 13670476 # GitLab 8.0.1
 
-  tasks:
-    - digital_ocean:
-        state: present
-        command: ssh
-        name: gitlab_key
-        ssh_pub_key: "{{ lookup('env', 'GITLAB_SSH_PUBLIC_KEY') }}"
-      register: gitlab_key
-    - debug: msg="{{ gitlab_key.ssh_key.id}}"
+  roles:
+    - gitlab-droplet
 
-    - name: Create new Droplet.
-      digital_ocean:
-        state: present
-        command: droplet
-        name: "{{ droplet_name }}"
-        private_networking: yes
-        size_id: "{{ droplet_memory_size }}"
-        image_id: "{{ droplet_image_id }}"
-        region_id: "{{ droplet_region }}"
-        # uses the ssh_key created in the previous step
-        ssh_key_ids: "{{ gitlab_key.ssh_key.id }}"
-        # Required for idempotence/only one droplet creation.
-        unique_name: yes
-      register: do
-
-    - name: Add new host to our inventory.
-      add_host:
-        name: "{{ do.droplet.ip_address }}"
-        groups: do
-      when: do.droplet is defined
-
-- hosts: do
+- hosts: gitlab_server
   remote_user: root
   gather_facts: false
+  vars:
+    default_packages:
+      - vim
 
   tasks:
     - name: Wait for port 22 to become available.
       local_action: "wait_for port=22 host={{ inventory_hostname }}"
 
-    - name: Install vim.
-      apt: name=vim state=present
+    - name: Install default packages.
+      apt: state=installed pkg={{ item }}
+      with_items: default_packages
+

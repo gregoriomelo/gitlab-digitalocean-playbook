@@ -1,0 +1,5 @@
+---
+droplet_name: gitlab
+droplet_region: 8 # NYC3
+droplet_memory_size: 63 # 1GB
+droplet_image_id: 13670476 # GitLab 8.0.1

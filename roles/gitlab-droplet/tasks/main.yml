@@ -1,0 +1,29 @@
+---
+- digital_ocean:
+    state: present
+    command: ssh
+    name: gitlab_key
+    ssh_pub_key: "{{ lookup('env', 'GITLAB_SSH_PUBLIC_KEY') }}"
+  register: gitlab_key
+- debug: msg="{{ gitlab_key.ssh_key.id}}"
+
+- name: Create new Droplet.
+  digital_ocean:
+    state: present
+    command: droplet
+    name: "{{ droplet_name }}"
+    private_networking: yes
+    size_id: "{{ droplet_memory_size }}"
+    image_id: "{{ droplet_image_id }}"
+    region_id: "{{ droplet_region }}"
+    # uses the ssh_key created in the previous step
+    ssh_key_ids: "{{ gitlab_key.ssh_key.id }}"
+    # Required for idempotence/only one droplet creation.
+    unique_name: yes
+  register: gitlab_server
+
+- name: Add new host to our inventory.
+  add_host:
+    name: "{{ gitlab_server.droplet.ip_address }}"
+    groups: gitlab_server
+  when: gitlab_server.droplet is defined
