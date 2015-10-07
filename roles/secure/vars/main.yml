@@ -1,0 +1,7 @@
+---
+security_sudoers_passwordless:
+  - deploy
+
+deploy_username: deploy
+deploy_public_keys:
+  - ~/.ssh/gitlab_digitalocean_rsa.pub

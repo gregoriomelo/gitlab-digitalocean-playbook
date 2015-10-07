@@ -1,0 +1,14 @@
+---
+- name: Install ufw.
+  apt: name=ufw state=present
+
+- name: Setup ufw
+  ufw: state=enabled policy=deny
+
+- name: Allow ssh traffic
+  ufw: rule=allow port={{ item }} proto=tcp
+  with_items:
+    - 22
+    - 80
+    - 443
+

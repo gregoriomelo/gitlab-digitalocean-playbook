@@ -1,24 +1,20 @@
 ---
-- name: Install fail2ban.
-  apt: name=fail2ban state=present
+- name: Upgrade APT to the latest packages
+  apt: upgrade=safe
 
-- name: Ensure fail2ban is running and enabled on boot.
-  service: name=fail2ban state=started enabled=yes
+- include: ufw.yml
+- include: fail2ban.yml
+- include: upgrade.yml
+
+# Autoupdate
+
+- name: Add deploy user
+  user: name={{ deploy_username }} password="{{ lookup('env', 'DEPLOY_PASSWORD') }}" shell=/bin/bash
+
+- name: Add authorized keys for deploy user
+  authorized_key: user={{ deploy_username }}
+                  key="{{ lookup('file', item) }}"
+  with_items: deploy_public_keys
 
 # SSH
 - include: ssh.yml
-
-# Autoupdate
-- name: Install unattended upgrades package.
-  apt: name=unattended-upgrades state=present
-
-- name: Copy unattended-upgrades configuration files in place.
-  template:
-    src: "../templates/{{ item }}.j2"
-    dest: "/etc/apt/apt.conf.d/{{ item }}"
-    owner: root
-    group: root
-    mode: 0644
-  with_items:
-    - 10periodic
-    - 50unattended-upgrades
