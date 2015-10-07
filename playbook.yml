@@ -12,6 +12,8 @@
   vars:
     default_packages:
       - vim
+  roles:
+    - secure
 
   tasks:
     - name: Wait for port 22 to become available.
